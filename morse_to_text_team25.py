@@ -98,9 +98,9 @@ def svd_manual(A, k=None):
         v /= np.linalg.norm(v)
         sigma_i = np.sqrt(EV)
         S[i] = sigma_i
-        u = matmul(A_cp, v.reshape(-1, 1)).flatten() / sigma_i
+        u = matmul(A_cp, v.reshape(-1, 1)) / sigma_i
         u /= np.linalg.norm(u)
-        U[:, i] = u
+        U[:, i] = u.flatten()
         V[:, i] = v
         A_cp -= sigma_i * outer_product(u, v)
 
