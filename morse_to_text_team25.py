@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.io.wavfile as wav
+import os
 
 morse_dict = {
     ".-": "A", "-...": "B", "-.-.": "C", "-..": "D",
@@ -44,7 +45,6 @@ def make_sparse(matrix, threshold_ratio=0.1):
 
 def matmul(A, B):
     m, n = A.shape
-    print(B.shape)
     n_b, p = B.shape
     result = np.zeros((m, p))
     for i in range(m):
@@ -170,18 +170,35 @@ def decode_morse(morse_code):
         decoded_words.append(decoded_word)
     return " ".join(decoded_words)
 
-file = 'helloworld.wav'
 
-spectra = audio_to_spectra_matrix(file)
 
-spectra_sparse = make_sparse(spectra)
 
-U, Sigma, Vt = svd_manual(spectra_sparse, 20)
+def calculate_match_percentage(expected, decoded):
+    min_len = min(len(expected), len(decoded))
+    matches = sum(1 for i in range(min_len) if expected[i] == decoded[i])
+    return (matches / max(len(expected), 1)) * 100
 
-filtered_matrix = reconstruct_matrix(U, Sigma, Vt)
+def test_morse_decoder(file_path):
+    filename = os.path.basename(file_path)
+    expected_message = os.path.splitext(filename)[0].lower().replace(" ", "")
 
-binary_signal = matrix_to_binary_signal(filtered_matrix)
 
-morse_code = binary_to_morse(binary_signal)
+    spectra = audio_to_spectra_matrix(file_path)
+    spectra_sparse = make_sparse(spectra)
+    U, Sigma, Vt = svd_manual(spectra_sparse, 20)
+    filtered_matrix = reconstruct_matrix(U, Sigma, Vt)
+    binary_signal = matrix_to_binary_signal(filtered_matrix)
+    morse_code = binary_to_morse(binary_signal)
+    decoded_message = decode_morse(morse_code)
+    normalized_decoded = decoded_message.lower().replace(" ", "")
+    normalized_expected = expected_message
+    match_percentage = calculate_match_percentage(normalized_expected, normalized_decoded)
 
-print(decode_morse(morse_code))
+    if normalized_decoded == normalized_expected:
+        print(f"'{decoded_message}' matches expected output 100%.")
+    else:
+        print(f"   Expected: {normalized_expected}")
+        print(f"   Got:      {normalized_decoded}")
+        print(f"   Match percentage: {match_percentage:.2f}%")
+
+test_morse_decoder("helloworld.wav") #waiting time from 20 to 50 min
