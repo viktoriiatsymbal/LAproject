@@ -171,8 +171,6 @@ def decode_morse(morse_code):
     return " ".join(decoded_words)
 
 
-
-
 def calculate_match_percentage(expected, decoded):
     min_len = min(len(expected), len(decoded))
     matches = sum(1 for i in range(min_len) if expected[i] == decoded[i])
@@ -180,8 +178,13 @@ def calculate_match_percentage(expected, decoded):
 
 def test_morse_decoder(file_path):
     filename = os.path.basename(file_path)
-    expected_message = os.path.splitext(filename)[0].lower().replace(" ", "")
+    base_name = os.path.splitext(filename)[0]
 
+    noise_tags = ['_white', '_gaussian', '_lowfreq', '_impulse', '_combined', '_original']
+    for tag in noise_tags:
+        base_name = base_name.replace(tag, '')
+
+    expected_message = base_name.lower().replace(" ", "")
 
     spectra = audio_to_spectra_matrix(file_path)
     spectra_sparse = make_sparse(spectra)
@@ -190,10 +193,12 @@ def test_morse_decoder(file_path):
     binary_signal = matrix_to_binary_signal(filtered_matrix)
     morse_code = binary_to_morse(binary_signal)
     decoded_message = decode_morse(morse_code)
+
     normalized_decoded = decoded_message.lower().replace(" ", "")
     normalized_expected = expected_message
-    match_percentage = calculate_match_percentage(normalized_expected, normalized_decoded)
 
+    # Порівняння
+    match_percentage = calculate_match_percentage(normalized_expected, normalized_decoded)
     if normalized_decoded == normalized_expected:
         print(f"'{decoded_message}' matches expected output 100%.")
     else:
